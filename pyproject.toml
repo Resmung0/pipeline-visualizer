@@ -1,0 +1,20 @@
+[project]
+name = "pipeline-visualizer"
+version = "0.1.0"
+authors = [
+    { name = "Marcos De Assis", email = "mg.21191077@gmail.com" }
+]
+description = "A simple CLI tool to visualize shell pipelines."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "typer>=0.25.1",
+]
+
+[dependency-groups]
+dev = [
+    "commitizen>=4.15.1",
+    "poethepoet>=0.45.0",
+    "ruff>=0.15.12",
+    "ty>=0.0.34",
+]
