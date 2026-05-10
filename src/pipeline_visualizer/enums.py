@@ -13,6 +13,6 @@ class Arrows(StrEnum):
 
     @property
     def symbol(self) -> str:
-        """Retorna o símbolo correspondente ao tipo de arrow"""
+        """Returns the symbol corresponding to the arrow type."""
         symbols = {"standard": "→", "alternative": "⇒", "thick": "──►"}
         return symbols[self.value]
