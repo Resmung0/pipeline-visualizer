@@ -1,12 +1,14 @@
-from rich.columns import Columns
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
+
+from src.pipeline_visualizer.enums import Arrows
 
 console = Console()
 
 
-def render(stages: list[list[str]]) -> None:
+def render(stages: list[list[str]], arrows: Arrows) -> None:
     items = []
     for i, tokens in enumerate(stages):
         command = tokens[0]
@@ -15,9 +17,16 @@ def render(stages: list[list[str]]) -> None:
         content = f"[bold cyan]{command}[/]"
         if args:
             content += f"\n[dim]{args}[/]"
+
         items.append(Panel(content, title=f"[dim]Stage {i + 1}[/]", expand=False))
 
         if i < len(stages) - 1:
-            items.append(Text("→", style="bold yellow", justify="center"))
+            items.append(Text(arrows.symbol, style="bold yellow"))
 
-    console.print(Columns(items, align="center", equal=False))
+    table = Table.grid(padding=(0, 1))
+    for i in range(len(items)):
+        # Panel columns go at the top, arrow columns in the middle
+        vertical = "middle" if i % 2 == 1 else "top"
+        table.add_column(vertical=vertical)
+    table.add_row(*items)
+    console.print(table)
