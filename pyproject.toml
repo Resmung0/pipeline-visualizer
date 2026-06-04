@@ -1,6 +1,6 @@
 [project]
 name = "pipeline-visualizer"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name = "Marcos De Assis", email = "mg.21191077@gmail.com" }
 ]
@@ -16,6 +16,15 @@ dependencies = [
 dev = [
     "commitizen>=4.15.1",
     "poethepoet>=0.45.0",
+    "prek>=0.4.4",
     "ruff>=0.15.12",
     "ty>=0.0.34",
 ]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "uv"
+update_changelog_on_bump = true
+major_version_zero = true
