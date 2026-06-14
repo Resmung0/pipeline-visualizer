@@ -1,0 +1,38 @@
+default_language_version.python = "3.12"
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "no-commit-to-branch", args = ["-b", "main", "-b", "dev", "-b", "qa"] },
+  { id = "check-added-large-files", args = ["--maxkb=100"] },
+  { id = "check-merge-conflict" },
+  { id = "end-of-file-fixer" },
+  { id = "check-toml" },
+  { id = "check-yaml" },
+]
+
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v6.0.0"
+hooks = [
+  { id = "debug-statements" },
+  { id = "name-tests-test" },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "clean", name = "clean cache files", language = "system", entry = "uv run poe clean", pass_filenames = false },
+  { id = "format", name = "format code", language = "system", entry = "uv run poe format" },
+  { id = "lint", name = "lint code", language = "system", entry = "uv run poe lint" },
+#  { id = "unit-test", name = "run unit tests", language = "system", entry = "poe test", pass_filenames = false },
+#  { id = "integration-test", name = "run integration tests", language = "system", entry = "poe test --mode integration", pass_filenames = false },
+]
+
+[[repos]]
+repo = "https://github.com/commitizen-tools/commitizen"
+rev = "v4.15.1"
+hooks = [
+  { id = "commitizen" },
+  { id = "commitizen-branch", stages = ["pre-push"]},
+]
