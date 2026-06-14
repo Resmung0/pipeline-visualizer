@@ -1,10 +1,15 @@
-from __future__ import annotations
+"""File responsible to store types."""
 
-from typing import TypedDict
+from typing import Literal
 
-from .enums import Delimiter
+from .enums import (
+    ConditionalANDArrow,
+    ConditionalORArrow,
+    Operator,
+    PipeArrow,
+    Redirect,
+)
 
-
-class Pipeline(TypedDict):
-    delimiter: Delimiter | None
-    stages: list[str | Pipeline]
+type ArrowStyle = Literal["standard", "alternative", "thick", "triangle"]
+type ArrowInput = PipeArrow | ConditionalORArrow | ConditionalANDArrow
+type Delimiter = Operator | Redirect | None

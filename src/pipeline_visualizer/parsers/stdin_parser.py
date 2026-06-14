@@ -1,30 +1,37 @@
+"""Parse command-line pipeline strings into structured pipeline objects.
+
+This module provides utilities for detecting top-level delimiters in shell
+pipeline commands, splitting pipelines into stages, parsing conditional
+operators, and constructing a normalized pipeline representation.
+"""
+
 from loguru import logger
 
-from src.pipeline_visualizer.enums import Delimiter
-from src.pipeline_visualizer.types import Pipeline
+from pipeline_visualizer.enums import Operator
+from pipeline_visualizer.models import Pipeline
 
 
 def _matches_delimiter(
     pipeline_cmd: str,
     char_id: int,
-    delimiter: Delimiter,
+    delimiter: Operator,
 ) -> bool:
     if not pipeline_cmd.startswith(delimiter.value, char_id):
         return False
 
-    if delimiter is Delimiter.PIPE:
-        is_or_operator = pipeline_cmd.startswith(Delimiter.OR.value, char_id)
+    if delimiter is Operator.PIPE:
+        is_or_operator = pipeline_cmd.startswith(Operator.OR.value, char_id)
         is_second_or_char = char_id > 0 and pipeline_cmd[char_id - 1] == "|"
         return not (is_or_operator or is_second_or_char)
 
     return True
 
 
-def _top_level_delimiters(
+def _top_level_delimiters(  # noqa: C901
     pipeline_cmd: str,
-    delimiters: tuple[Delimiter, ...],
-) -> list[tuple[int, Delimiter]]:
-    matches: list[tuple[int, Delimiter]] = []
+    delimiters: tuple[Operator, ...],
+) -> list[tuple[int, Operator]]:
+    matches: list[tuple[int, Operator]] = []
     delimiters_by_size = sorted(
         delimiters,
         key=lambda delimiter: len(delimiter.value),
@@ -85,7 +92,7 @@ def _top_level_delimiters(
 
 
 def _split_pipeline(pipeline_cmd: str) -> list[str]:
-    matches = _top_level_delimiters(pipeline_cmd, (Delimiter.PIPE,))
+    matches = _top_level_delimiters(pipeline_cmd, (Operator.PIPE,))
     if not matches:
         return [pipeline_cmd.strip()]
 
@@ -102,7 +109,7 @@ def _split_pipeline(pipeline_cmd: str) -> list[str]:
 def _parse_conditionals(pipeline_cmd: str) -> str | Pipeline:
     matches = _top_level_delimiters(
         pipeline_cmd,
-        (Delimiter.AND, Delimiter.OR),
+        (Operator.AND, Operator.OR),
     )
     if not matches:
         return pipeline_cmd.strip()
@@ -122,10 +129,18 @@ def _parse_conditionals(pipeline_cmd: str) -> str | Pipeline:
 
 @logger.catch
 def parse(pipeline_cmd: str) -> Pipeline:
+    """Parse stdion commands.
+
+    Args:
+        pipeline_cmd (str): Bash pipeline to parse commands.
+
+    Returns:
+        Pipeline: Pipeline representation.
+    """
     stages = _split_pipeline(pipeline_cmd.strip())
     if len(stages) > 1:
         return {
-            "delimiter": Delimiter.PIPE,
+            "delimiter": Operator.PIPE,
             "stages": [_parse_conditionals(stage) for stage in stages],
         }
 
