@@ -1,0 +1,60 @@
+[tool.poe.tasks]
+clean = { help = "Remove cached files", script = "poethepoet.scripts:rm('./**/__pycache__', '.pytest_cache', '.ruff_cache')" }
+simple-test = "uv run viz 'a && b | c'"
+init = { help = "Initialize project configuration for development", cmd = "prek install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push" }
+
+[tool.poe.groups.development]
+heading = "Tasks related to development"
+
+    [tool.poe.groups.development.tasks.commit]
+    help = "Commit using conventional commit pattern"
+    cmd = "cz c"
+
+    [tool.poe.groups.development.tasks.lint]
+    help = "Analyse syntax and type errors"
+    parallel = [
+        { cmd = "ty check --output-format concise" },
+        { cmd = "ruff check --output-format grouped" },
+        { cmd = "pydoclint -q ." }
+    ]
+
+    [tool.poe.groups.development.tasks.format]
+    help = "Format code trying to fix syntax and type errors"
+    sequence = [
+        "ruff format",
+        "ruff check --fix",
+        "ty check --fix "
+    ]
+    default_item_type = "cmd"
+
+    [tool.poe.groups.development.tasks.test]
+    help = "Run automated tests"
+    cmd = "pytest -v -m"
+    args = [
+        { name = "mode", help = "Type of automated test to run", default = "unit", choices = ['unit', 'integration'] }
+    ]
+
+[tool.poe.groups.validation]
+heading = "Tasks related to validation"
+    
+    [tool.poe.groups.validation.tasks.validate-hooks]
+    help = "Validate git hooks file"
+    cmd = "prek validate-config prek.toml"
+
+    [tool.poe.groups.validation.tasks.validate-commit]
+    help = "Check if a commit message matches the conventional commits pattern"
+    cmd ='cz check -m "$message"'
+    args = [
+        { name = "message", help = "Commit message to check", type = "string" }
+    ]
+
+[tool.poe.groups.deploy]
+heading = "Deploy related tasks"
+    
+    [tool.poe.groups.deploy.tasks.bump]
+    help = "Bump project version into git tags"
+    cmd = "cz bump"
+
+    [tool.poe.groups.deploy.tasks.check-tags]
+    help = "Check all project's git tags bumped versions"
+    cmd = "git tag --list"
