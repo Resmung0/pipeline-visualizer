@@ -1,6 +1,7 @@
 [tool.poe.tasks]
-clean = { help = "Remove cached files", script = "poethepoet.scripts:rm('./**/__pycache__', '.pytest_cache', '.ruff_cache')"}
-simple-test = "uv run main.py 'a && b | c'"
+clean = { help = "Remove cached files", script = "poethepoet.scripts:rm('./**/__pycache__', '.pytest_cache', '.ruff_cache')" }
+simple-test = "uv run viz 'a && b | c'"
+init = { help = "Initialize project configuration for development", cmd = "prek install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push" }
 
 [tool.poe.groups.development]
 heading = "Tasks related to development"
@@ -10,10 +11,11 @@ heading = "Tasks related to development"
     cmd = "cz c"
 
     [tool.poe.groups.development.tasks.lint]
-    help = "Analisa erros de sintaxe e de tipagem"
+    help = "Analyse syntax and type errors"
     parallel = [
         { cmd = "ty check --output-format concise" },
-        { cmd = "ruff check --output-format concise" }
+        { cmd = "ruff check --output-format grouped" },
+        { cmd = "pydoclint -q ." }
     ]
 
     [tool.poe.groups.development.tasks.format]

@@ -11,5 +11,5 @@ from .enums import (
 )
 
 type ArrowStyle = Literal["standard", "alternative", "thick", "triangle"]
-type ArrowInput = PipeArrow | ConditionalORArrow | ConditionalANDArrow
+type Arrow = PipeArrow | ConditionalORArrow | ConditionalANDArrow
 type Delimiter = Operator | Redirect | None

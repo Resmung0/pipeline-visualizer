@@ -129,7 +129,7 @@ def _parse_conditionals(pipeline_cmd: str) -> str | Pipeline:
 
 @logger.catch
 def parse(pipeline_cmd: str) -> Pipeline:
-    """Parse stdion commands.
+    """Parse stdin commands.
 
     Args:
         pipeline_cmd (str): Bash pipeline to parse commands.

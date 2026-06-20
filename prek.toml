@@ -20,6 +20,21 @@ hooks = [
 ]
 
 [[repos]]
+repo = "https://github.com/commitizen-tools/commitizen"
+rev = "v4.15.1"
+hooks = [
+  { id = "commitizen" },
+  { id = "commitizen-branch", stages = ["pre-push"]},
+]
+
+[[repos]]
+repo = "https://github.com/crate-ci/typos"
+rev = "v1.47.2"
+hooks = [
+  { id = "typos" },
+]
+
+[[repos]]
 repo = "local"
 hooks = [
   { id = "clean", name = "clean cache files", language = "system", entry = "uv run poe clean", pass_filenames = false },
@@ -27,12 +42,4 @@ hooks = [
   { id = "lint", name = "lint code", language = "system", entry = "uv run poe lint" },
 #  { id = "unit-test", name = "run unit tests", language = "system", entry = "poe test", pass_filenames = false },
 #  { id = "integration-test", name = "run integration tests", language = "system", entry = "poe test --mode integration", pass_filenames = false },
-]
-
-[[repos]]
-repo = "https://github.com/commitizen-tools/commitizen"
-rev = "v4.15.1"
-hooks = [
-  { id = "commitizen" },
-  { id = "commitizen-branch", stages = ["pre-push"]},
 ]
