@@ -5,21 +5,21 @@ stdin input. Exposes the `pipeline` command which accepts a pipeline
 definition and an optional arrow style.
 """
 
-from cyclopts import App
+from cyclopts import App, Parameter
 
 from pipeline_visualizer.parsers import stdin_parser
 from pipeline_visualizer.renders import standard_render
-from pipeline_visualizer.types import ArrowStyle
+from pipeline_visualizer.types import ArrowStyle, PipelineCommand
 
-app = App()
+app = App(default_parameter=Parameter(short_alias=True))
 
 
 @app.default
-def pipeline(cmd: str, arrow: ArrowStyle | None = None) -> None:
+def pipeline(cmd: PipelineCommand, /, *, arrow: ArrowStyle | None = None) -> None:
     """Render a pipeline diagram from a command string.
 
     Args:
-        cmd (str): The shell pipeline command to visualize.
+        cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
     """
     stages = stdin_parser.parse(cmd)
