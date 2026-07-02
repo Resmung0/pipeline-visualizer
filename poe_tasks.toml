@@ -1,6 +1,6 @@
 [tool.poe.tasks]
 clean = { help = "Remove cached files", script = "poethepoet.scripts:rm('./**/__pycache__', '.pytest_cache', '.ruff_cache')" }
-simple-test = "uv run viz 'a && b | c'"
+simple-test = "uv run --exact viz 'a && b | c'"
 init = { help = "Initialize project configuration for development", cmd = "prek install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push" }
 
 [tool.poe.groups.development]

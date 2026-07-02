@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pipeline-visualizer"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     { name = "Marcos De Assis", email = "mg.21191077@gmail.com" }
 ]

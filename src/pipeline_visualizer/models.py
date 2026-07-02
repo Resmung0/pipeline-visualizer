@@ -22,9 +22,9 @@ class Pipeline(TypedDict):
 # class Stage:
 #     command: str
 #     subcommand: str | None
-#     parameter: str
-#     duration: datetime
-#     throughput: float
+#     parameter: str | None
+#     duration: datetime | None
+#     throughput: float | None
 
 
 # @dataclass
@@ -33,7 +33,7 @@ class Pipeline(TypedDict):
 #     left: "Stage | AlternativePipeline"
 #     right: "Stage | AlternativePipeline"
 
-#     def execute(self):
+#     def execute(self) -> None:
 #         pass
 
 
