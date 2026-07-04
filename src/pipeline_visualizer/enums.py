@@ -40,61 +40,52 @@ class Redirect(StrEnum):
     IN_APPEND = "<<"
 
 
-class PipeArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Pipe operator.
+class HorizontalArrow(StrEnum):
+    """Represents the different arrow types on horizontal orientation used to visualize shell pipeline commands.
 
     The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
+    to map these string identifiers to specific Unicode symbols for visual representation.
 
     Attributes:
         STANDARD: Represents the standard arrow symbol used in visualizations.
         ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
-        THICK: Represents the thick arrow symbol used in visualizations.
         TRIANGLE: Represents the triangle arrow symbol used in visualizations.
     """
 
     STANDARD = "→"
     ALTERNATIVE = "⇒"
-    THICK = "──►"
     TRIANGLE = "▶"
 
 
-class ConditionalORArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Condition OR operator.
+class DiagonalArrow(StrEnum):
+    """Represents the different arrow types on diagonal orientation used to visualize shell pipeline commands.
 
     The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
+    to map these string identifiers to specific Unicode symbols for visual representation.
 
     Attributes:
         STANDARD: Represents a standard arrow style.
         ALTERNATIVE: Represents an alternative arrow style.
-        THICK: Represents a variation, often conceptually "thick" or an alternative appearance.
         TRIANGLE: Represents a variation, often appearing as a triangle arrow.
     """
 
     STANDARD = "↘"
     ALTERNATIVE = "⇘"
-    THICK = "↘"
     TRIANGLE = "↘"
 
 
-class ConditionalANDArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Condition AND operator.
+class VerticalArrow(StrEnum):
+    """Represents the different arrow types on vertical orientation used to visualize shell pipeline commands.
 
     The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
+    to map these string identifiers to specific Unicode symbols for visual representation.
 
     Attributes:
         STANDARD: Represents the standard arrow symbol used in visualizations.
         ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
-        THICK: Represents the thick arrow symbol used in visualizations.
         TRIANGLE: Represents the triangle arrow symbol used in visualizations.
     """
 
     STANDARD = "↓"
     ALTERNATIVE = "⇓"
-    THICK = "⤓"
     TRIANGLE = "▼"

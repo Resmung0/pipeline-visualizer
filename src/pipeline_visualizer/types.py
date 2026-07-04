@@ -5,15 +5,15 @@ from typing import Annotated, Literal
 from cyclopts import Parameter
 
 from .enums import (
-    ConditionalANDArrow,
-    ConditionalORArrow,
+    DiagonalArrow,
+    HorizontalArrow,
     Operator,
-    PipeArrow,
     Redirect,
+    VerticalArrow,
 )
 from .validations import validate_cmd
 
 type ArrowStyle = Literal["standard", "alternative", "thick", "triangle"]
-type Arrow = PipeArrow | ConditionalORArrow | ConditionalANDArrow
+type Arrow = HorizontalArrow | VerticalArrow | DiagonalArrow
 type Delimiter = Operator | Redirect
 type PipelineCommand = Annotated[str, Parameter(validator=validate_cmd)]
