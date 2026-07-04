@@ -5,126 +5,11 @@ pipeline commands, splitting pipelines into stages, parsing conditional
 operators, and constructing a normalized pipeline representation.
 """
 
+from lark import Lark
 from loguru import logger
 
-from pipeline_visualizer.enums import Operator
 from pipeline_visualizer.models import Pipeline
-
-
-def _matches_delimiter(
-    pipeline_cmd: str,
-    char_id: int,
-    delimiter: Operator,
-) -> bool:
-    if not pipeline_cmd.startswith(delimiter.value, char_id):
-        return False
-
-    if delimiter is Operator.PIPE:
-        is_or_operator = pipeline_cmd.startswith(Operator.OR.value, char_id)
-        is_second_or_char = char_id > 0 and pipeline_cmd[char_id - 1] == "|"
-        return not (is_or_operator or is_second_or_char)
-
-    return True
-
-
-def _top_level_delimiters(  # noqa: C901
-    pipeline_cmd: str,
-    delimiters: tuple[Operator, ...],
-) -> list[tuple[int, Operator]]:
-    matches: list[tuple[int, Operator]] = []
-    delimiters_by_size = sorted(
-        delimiters,
-        key=lambda delimiter: len(delimiter.value),
-        reverse=True,
-    )
-    quote: str | None = None
-    escaped = False
-    group_depth = 0
-    char_id = 0
-
-    while char_id < len(pipeline_cmd):
-        char = pipeline_cmd[char_id]
-
-        if escaped:
-            escaped = False
-            char_id += 1
-            continue
-
-        if char == "\\" and quote != "'":
-            escaped = True
-            char_id += 1
-            continue
-
-        if quote:
-            if char == quote:
-                quote = None
-            char_id += 1
-            continue
-
-        if char in ("'", '"', "`"):
-            quote = char
-            char_id += 1
-            continue
-
-        if char == "(":
-            group_depth += 1
-            char_id += 1
-            continue
-
-        if char == ")" and group_depth > 0:
-            group_depth -= 1
-            char_id += 1
-            continue
-
-        if group_depth == 0:
-            for delimiter in delimiters_by_size:
-                if _matches_delimiter(pipeline_cmd, char_id, delimiter):
-                    matches.append((char_id, delimiter))
-                    char_id += len(delimiter.value)
-                    break
-            else:
-                char_id += 1
-            continue
-
-        char_id += 1
-
-    return matches
-
-
-def _split_pipeline(pipeline_cmd: str) -> list[str]:
-    matches = _top_level_delimiters(pipeline_cmd, (Operator.PIPE,))
-    if not matches:
-        return [pipeline_cmd.strip()]
-
-    stages: list[str] = []
-    stage_start = 0
-    for delimiter_id, delimiter in matches:
-        stages.append(pipeline_cmd[stage_start:delimiter_id].strip())
-        stage_start = delimiter_id + len(delimiter.value)
-
-    stages.append(pipeline_cmd[stage_start:].strip())
-    return stages
-
-
-def _parse_conditionals(pipeline_cmd: str) -> str | Pipeline:
-    matches = _top_level_delimiters(
-        pipeline_cmd,
-        (Operator.AND, Operator.OR),
-    )
-    if not matches:
-        return pipeline_cmd.strip()
-
-    delimiter_id, delimiter = matches[-1]
-    left_stage = pipeline_cmd[:delimiter_id].strip()
-    right_stage = pipeline_cmd[delimiter_id + len(delimiter.value) :].strip()
-
-    return {
-        "delimiter": delimiter,
-        "stages": [
-            _parse_conditionals(left_stage),
-            _parse_conditionals(right_stage),
-        ],
-    }
+from pipeline_visualizer.transformer import PipelineTransformer
 
 
 @logger.catch
@@ -137,15 +22,37 @@ def parse(pipeline_cmd: str) -> Pipeline:
     Returns:
         Pipeline: Pipeline representation.
     """
-    stages = _split_pipeline(pipeline_cmd.strip())
-    if len(stages) > 1:
-        return {
-            "delimiter": Operator.PIPE,
-            "stages": [_parse_conditionals(stage) for stage in stages],
-        }
+    grammar = r"""
+    ?start: or_expr
 
-    stage = _parse_conditionals(stages[0])
-    if isinstance(stage, str):
-        return {"delimiter": None, "stages": [stage]}
+    ?or_expr: and_expr
+            | or_expr "||" and_expr   -> logical_or
 
-    return stage
+    ?and_expr: semicolon_expr
+            | and_expr "&&" semicolon_expr -> logical_and
+
+    ?semicolon_expr: pipe_expr
+            | semicolon_expr ";" pipe_expr -> semmicolon
+
+    ?pipe_expr: redirect_expr
+            | pipe_expr "|" redirect_expr -> pipe
+
+    ?redirect_expr: atom
+                | redirect_expr ">" atom   -> redirect_out
+                | redirect_expr ">>" atom  -> redirect_out_append
+                | redirect_expr "<" atom   -> redirect_in
+                | redirect_expr "<<" atom   -> redirect_in_append
+
+    ?atom: COMMAND
+        | "(" or_expr ")"
+
+    COMMAND: /[^|&<>()\s]+/
+
+    %ignore /\s+/
+    """
+
+    # Cria o parser
+    parser = Lark(
+        grammar, start="start", parser="lalr", transformer=PipelineTransformer()
+    )
+    return parser.parse(pipeline_cmd.strip())  # type: ignore[return-value]  # ty:ignore[invalid-return-type]

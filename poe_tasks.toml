@@ -22,7 +22,7 @@ heading = "Tasks related to development"
     help = "Format code trying to fix syntax and type errors"
     sequence = [
         "ruff format",
-        "ruff check --fix",
+        "ruff check --fix --output-format grouped",
         "ty check --fix "
     ]
     default_item_type = "cmd"

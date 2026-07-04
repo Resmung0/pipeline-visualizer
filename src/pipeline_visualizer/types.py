@@ -15,5 +15,5 @@ from .validations import validate_cmd
 
 type ArrowStyle = Literal["standard", "alternative", "thick", "triangle"]
 type Arrow = PipeArrow | ConditionalORArrow | ConditionalANDArrow
-type Delimiter = Operator | Redirect | None
+type Delimiter = Operator | Redirect
 type PipelineCommand = Annotated[str, Parameter(validator=validate_cmd)]
