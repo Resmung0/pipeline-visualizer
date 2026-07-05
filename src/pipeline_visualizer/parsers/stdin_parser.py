@@ -11,18 +11,7 @@ from loguru import logger
 from pipeline_visualizer.models import Pipeline
 from pipeline_visualizer.transformer import PipelineTransformer
 
-
-@logger.catch
-def parse(pipeline_cmd: str) -> Pipeline:
-    """Parse stdin commands.
-
-    Args:
-        pipeline_cmd (str): Bash pipeline to parse commands.
-
-    Returns:
-        Pipeline: Pipeline representation.
-    """
-    grammar = r"""
+PIPELINE_GRAMMAR = r"""
     ?start: or_expr
 
     ?or_expr: and_expr
@@ -51,10 +40,30 @@ def parse(pipeline_cmd: str) -> Pipeline:
     COMMAND: /[^|&<>()\s]+/
 
     %ignore /\s+/
-    """
+"""
 
-    # Cria o parser
-    parser = Lark(
-        grammar, start="start", parser="lalr", transformer=PipelineTransformer()
-    )
-    return parser.parse(pipeline_cmd.strip())  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+# Global parser instance for caching
+_PARSER: Lark | None = None
+
+
+@logger.catch
+def parse(pipeline_cmd: str) -> Pipeline:
+    """Parse stdin commands.
+
+    Args:
+        pipeline_cmd (str): Bash pipeline to parse commands.
+
+    Returns:
+        Pipeline: Pipeline representation.
+    """
+    global _PARSER  # noqa: PLW0603
+    if _PARSER is None:
+        # Lazy initialization ensures that errors during parser construction
+        # (like grammar issues) are caught by @logger.catch and that
+        # expensive work is only done once.
+        _PARSER = Lark(PIPELINE_GRAMMAR, start="start", parser="lalr")
+
+    # We instantiate the transformer per call to ensure it's stateless and
+    # safe for repeated use, as per code review suggestions.
+    tree = _PARSER.parse(pipeline_cmd.strip())
+    return PipelineTransformer().transform(tree)  # type: ignore[return-value]
