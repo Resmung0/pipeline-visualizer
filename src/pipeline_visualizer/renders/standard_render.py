@@ -12,118 +12,140 @@ from rich.text import Text
 
 from pipeline_visualizer.constants import ARROW_STYLE_COLOR
 from pipeline_visualizer.enums import (
-    ConditionalANDArrow,
-    ConditionalORArrow,
     Operator,
-    PipeArrow,
-    Redirect,
 )
-from pipeline_visualizer.models import Pipeline
-from pipeline_visualizer.types import Arrow, ArrowStyle
+from pipeline_visualizer.models import Pipeline, Stage
+from pipeline_visualizer.types import ArrowStyle
 
 console = Console()
 
 
-def _extract_command(command: str, token_id: int) -> Panel:
-    def extract_tokens(tokens: list[str], token_id: int) -> Panel:
-        command = tokens[0]
-        args = " ".join(tokens[1:])
-
-        content = f"[bold cyan]{command}[/]"
-        if args:
-            content += f"\n[dim]{args}[/]"
-
-        return Panel(content, title=f"[dim]Stage {token_id + 1}[/]", expand=False)
-
+def _render_stage(stage: Stage, stage_id: int) -> Panel:
+    command = " ".join(
+        part for part in (stage.command, stage.subcommand, stage.parameter) if part
+    )
     try:
         tokens = shlex.split(command)
     except ValueError:
         tokens = command.split()
+    if not command:
+        tokens = [command]
 
-    return extract_tokens(tokens or [command], token_id)
+    executable, *args = tokens
+    content = Text(executable, style="bold cyan")
+    if args:
+        content.append("\n")
+        content.append(" ".join(args), style="dim")
 
-
-def _choose_arrow(delimiter: Operator | Redirect, arrow_style: ArrowStyle) -> Arrow:
-    if isinstance(delimiter, Redirect):
-        raise RuntimeError("Redirect is not implemented yet!")
-
-    style = arrow_style.upper()
-    match delimiter:
-        case Operator.PIPE:
-            chose_arrow = PipeArrow[style]
-        case Operator.AND:
-            chose_arrow = ConditionalANDArrow[style]
-        case Operator.OR:
-            chose_arrow = ConditionalORArrow[style]
-        case _:
-            raise RuntimeError(f"Operator {delimiter} unsupported!")
-
-    return chose_arrow
+    return Panel(content, title=f"[dim]Stage {stage_id + 1}[/]", expand=False)
 
 
-def _render_horizontal(stages: list[RenderableType], arrow: Arrow) -> Table:
+def _render_horizontal(stages: list[RenderableType], connector: str) -> Table:
+    # Create a list of panels and arrows to be added to the table.
+    # Each stage is followed by a connector, except for the last stage.
     panels: list[RenderableType] = []
-    for stage_id, stage in enumerate(stages):
+    for stage_id, stage in enumerate(stages, start=1):
         panels.append(stage)
-        if stage_id < len(stages) - 1:
-            panels.append(Text(arrow, style=ARROW_STYLE_COLOR))
+        if stage_id < len(stages):
+            panels.append(Text(connector, style=ARROW_STYLE_COLOR))
 
+    # Create a table with the appropriate number of columns for the panels and arrows.
     table = Table.grid(padding=(0, 1))
     for panel_id in range(len(panels)):
         # Panel columns go at the top, arrow columns in the middle
-        vertical = "middle" if panel_id % 2 == 1 else "top"
-        table.add_column(vertical=vertical, justify="center")
+        table.add_column(
+            vertical="middle" if panel_id % 2 == 1 else "top", justify="center"
+        )
     table.add_row(*panels)
     return table
 
 
-def _render_vertical(stages: list[RenderableType], arrow: Arrow) -> Table:
+def _render_vertical(stages: list[RenderableType], connector: str) -> Table:
     table = Table.grid(padding=(0, 0))
     table.add_column(justify="center")
 
-    for stage_id, stage in enumerate(stages):
+    for stage_id, stage in enumerate(stages, start=1):
         table.add_row(stage)
-        if stage_id < len(stages) - 1:
-            table.add_row(Text(arrow, style=ARROW_STYLE_COLOR))
+        if stage_id < len(stages):
+            table.add_row(Text(connector, style=ARROW_STYLE_COLOR))
 
     return table
 
 
+def _render_branch_alignment(
+    left_stage: RenderableType,
+    left_connector: str,
+    right_stage_top: RenderableType,
+    right_connector: str,
+    right_stage_bottom: RenderableType,
+) -> Table:
+    blank = Text("")
+    table = Table.grid(padding=(0, 1))
+    table.add_column(vertical="top", justify="center")
+    table.add_column(vertical="middle", justify="center")
+    table.add_column(vertical="top", justify="center")
+
+    table.add_row(
+        left_stage, Text(left_connector, style=ARROW_STYLE_COLOR), right_stage_top
+    )
+    table.add_row(blank, Text(right_connector, style=ARROW_STYLE_COLOR), blank)
+    table.add_row(blank, blank, right_stage_bottom)
+    return table
+
+
+def _render_or_below_and(
+    node: Pipeline, arrow_style: ArrowStyle, stage_counter: Iterator[int]
+) -> Table:
+    left = node.left
+    if not isinstance(left, Pipeline):
+        raise TypeError("OR branch alignment requires a pipeline on the left side.")
+
+    left_stage = _render_node(left.left, arrow_style, stage_counter)
+    and_stage = _render_node(left.right, arrow_style, stage_counter)
+    or_stage = _render_node(node.right, arrow_style, stage_counter)
+    and_connector = left.delimiter.arrow_style(arrow_style)
+    or_connector = node.delimiter.arrow_style(arrow_style)
+
+    return _render_branch_alignment(
+        left_stage,
+        and_connector,
+        and_stage,
+        or_connector,
+        or_stage,
+    )
+
+
 def _render_node(
-    stage: str | Pipeline, arrow_style: ArrowStyle, stage_counter: Iterator[int]
+    node: Stage | Pipeline, arrow_style: ArrowStyle, stage_counter: Iterator[int]
 ) -> RenderableType:
-    if isinstance(stage, str):
-        return _extract_command(stage, next(stage_counter))
+    if isinstance(node, Stage):
+        return _render_stage(node, next(stage_counter))
 
-    delimiter = stage["delimiter"]
-    children = stage["stages"]
-    if delimiter is None:
-        if len(children) == 1:
-            return _render_node(children[0], arrow_style, stage_counter)
-
-        return _render_vertical(
-            [_render_node(child, arrow_style, stage_counter) for child in children],
-            ConditionalANDArrow.STANDARD,
-        )
+    if (
+        node.delimiter == Operator.OR
+        and isinstance(node.left, Pipeline)
+        and node.left.delimiter == Operator.AND
+    ):
+        return _render_or_below_and(node, arrow_style, stage_counter)
 
     rendered_children = [
-        _render_node(child, arrow_style, stage_counter) for child in children
+        _render_node(node.left, arrow_style, stage_counter),
+        _render_node(node.right, arrow_style, stage_counter),
     ]
+    connector = node.delimiter.arrow_style(arrow_style)
+    if node.delimiter.is_horizontal():
+        return _render_horizontal(rendered_children, connector)
 
-    arrow = _choose_arrow(delimiter, arrow_style)
-    if delimiter == Operator.PIPE:
-        return _render_horizontal(rendered_children, arrow)
-
-    return _render_vertical(rendered_children, arrow)
+    return _render_vertical(rendered_children, connector)
 
 
 @logger.catch
-def render(stages: Pipeline, arrow_style: ArrowStyle) -> None:
+def render(node: Stage | Pipeline, arrow_style: ArrowStyle) -> None:
     """Render a pipeline with the specified stages and arrow style.
 
     Args:
-        stages (Pipeline): The pipeline structure containing stages to render.
+        node (Stage | Pipeline): The pipeline structure containing stages to render.
         arrow_style (ArrowStyle): The arrow style configuration for connecting stages.
     """
-    rendered_node = _render_node(stages, arrow_style, count())
+    rendered_node = _render_node(node, arrow_style, count())
     console.print(rendered_node)

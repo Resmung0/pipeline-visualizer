@@ -5,7 +5,64 @@ pipeline visualizer for delimiters, helper texts and arrow styles
 with associated display symbols.
 """
 
+from __future__ import annotations
+
 from enum import StrEnum
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from .types import ArrowStyle
+
+
+class HorizontalArrow(StrEnum):
+    """Represents the different arrow types on horizontal orientation used to visualize shell pipeline commands.
+
+    The arrows are defined by strings, and the class provides a mechanism
+    to map these string identifiers to specific Unicode symbols for visual representation.
+
+    Attributes:
+        STANDARD: Represents the standard arrow symbol used in visualizations.
+        ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
+        TRIANGLE: Represents the triangle arrow symbol used in visualizations.
+    """
+
+    STANDARD = "→"
+    ALTERNATIVE = "⇒"
+    TRIANGLE = "▶"
+
+
+class DiagonalArrow(StrEnum):
+    """Represents the different arrow types on diagonal orientation used to visualize shell pipeline commands.
+
+    The arrows are defined by strings, and the class provides a mechanism
+    to map these string identifiers to specific Unicode symbols for visual representation.
+
+    Attributes:
+        STANDARD: Represents a standard arrow style.
+        ALTERNATIVE: Represents an alternative arrow style.
+        TRIANGLE: Represents a variation, often appearing as a triangle arrow.
+    """
+
+    STANDARD = "↘"
+    ALTERNATIVE = "⇘"
+    TRIANGLE = "↘"
+
+
+class VerticalArrow(StrEnum):
+    """Represents the different arrow types on vertical orientation used to visualize shell pipeline commands.
+
+    The arrows are defined by strings, and the class provides a mechanism
+    to map these string identifiers to specific Unicode symbols for visual representation.
+
+    Attributes:
+        STANDARD: Represents the standard arrow symbol used in visualizations.
+        ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
+        TRIANGLE: Represents the triangle arrow symbol used in visualizations.
+    """
+
+    STANDARD = "↓"
+    ALTERNATIVE = "⇓"
+    TRIANGLE = "▼"
 
 
 class Operator(StrEnum):
@@ -23,6 +80,33 @@ class Operator(StrEnum):
     OR = "||"
     SEMICOLON = ";"
 
+    def arrow_style(self, style: ArrowStyle) -> str:
+        """Return the style associated with the operator.
+
+        Args:
+            style (ArrowStyle): The style name to retrieve the corresponding arrow.
+
+        Returns:
+            str: The style name corresponding to the operator.
+        """
+        arrow_style = style.upper()
+        match self:
+            case Operator.AND | Operator.SEMICOLON:
+                arrow = HorizontalArrow[arrow_style]
+            case Operator.PIPE:
+                arrow = VerticalArrow[arrow_style]
+            case Operator.OR:
+                arrow = DiagonalArrow[arrow_style]
+        return str(arrow)
+
+    def is_horizontal(self) -> bool:
+        """Check if the operator is horizontal.
+
+        Returns:
+            bool: True if the operator is horizontal, False otherwise.
+        """
+        return self in {Operator.AND, Operator.OR, Operator.SEMICOLON}
+
 
 class Redirect(StrEnum):
     """Redirections used in pipeline commands.
@@ -39,62 +123,18 @@ class Redirect(StrEnum):
     IN = "<"
     IN_APPEND = "<<"
 
+    def arrow_style(self, _: ArrowStyle) -> Literal[">", ">>", "<", "<<"]:
+        """Return the style associated with the operator.
 
-class PipeArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Pipe operator.
+        Returns:
+            Literal[">", ">>", "<", "<<"]: The style name corresponding to the operator.
+        """
+        return self.value
 
-    The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
+    def is_horizontal(self) -> bool:
+        """Check if the operator is horizontal.
 
-    Attributes:
-        STANDARD: Represents the standard arrow symbol used in visualizations.
-        ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
-        THICK: Represents the thick arrow symbol used in visualizations.
-        TRIANGLE: Represents the triangle arrow symbol used in visualizations.
-    """
-
-    STANDARD = "→"
-    ALTERNATIVE = "⇒"
-    THICK = "──►"
-    TRIANGLE = "▶"
-
-
-class ConditionalORArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Condition OR operator.
-
-    The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
-
-    Attributes:
-        STANDARD: Represents a standard arrow style.
-        ALTERNATIVE: Represents an alternative arrow style.
-        THICK: Represents a variation, often conceptually "thick" or an alternative appearance.
-        TRIANGLE: Represents a variation, often appearing as a triangle arrow.
-    """
-
-    STANDARD = "↘"
-    ALTERNATIVE = "⇘"
-    THICK = "↘"
-    TRIANGLE = "↘"
-
-
-class ConditionalANDArrow(StrEnum):
-    """Represents the different arrow types used to visualize shell pipeline commands with the Condition AND operator.
-
-    The arrows are defined by strings, and the class provides a mechanism
-    to map these string identifiers to specific Unicode symbols for
-    visual representation.
-
-    Attributes:
-        STANDARD: Represents the standard arrow symbol used in visualizations.
-        ALTERNATIVE: Represents the alternative arrow symbol used in visualizations.
-        THICK: Represents the thick arrow symbol used in visualizations.
-        TRIANGLE: Represents the triangle arrow symbol used in visualizations.
-    """
-
-    STANDARD = "↓"
-    ALTERNATIVE = "⇓"
-    THICK = "⤓"
-    TRIANGLE = "▼"
+        Returns:
+            bool: True if the operator is horizontal, False otherwise.
+        """
+        return False
