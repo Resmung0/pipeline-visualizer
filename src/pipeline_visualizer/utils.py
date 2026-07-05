@@ -8,18 +8,14 @@ from typing import Literal
 
 from .enums import Operator, Redirect
 
+Delimiter = Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]
 
-def extract_delimiters() -> list[Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]]:
+
+def extract_delimiters() -> list[Delimiter]:
     """Return shell operator and redirection delimiters.
 
     Returns:
-        list[Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]]: The
-        delimiters are extracted from the Operator and Redirect enums by
-        filtering the enum members and collecting their symbol values.
+        list[Delimiter]: The delimiters extracted from the Operator and
+        Redirect enums by collecting their symbol values.
     """
-    extracted_delimiters = []
-    for delimiters in Operator, Redirect:
-        for delimiter in filter(lambda s: s.isupper(), dir(delimiters)):
-            delimiter_symbol = delimiters[delimiter].value
-            extracted_delimiters.append(delimiter_symbol)
-    return extracted_delimiters
+    return [member.value for enum in (Operator, Redirect) for member in enum]
