@@ -5,9 +5,11 @@ stdin input. Exposes the `pipeline` command which accepts a pipeline
 definition and an optional arrow style.
 """
 
+from typing import Literal
+
 from cyclopts import App, Parameter
 
-from pipeline_visualizer.parsers import stdin_parser
+from pipeline_visualizer.parsers import standard_parser
 from pipeline_visualizer.renders import standard_render
 from pipeline_visualizer.types import ArrowStyle, PipelineCommand
 
@@ -15,15 +17,30 @@ app = App(default_parameter=Parameter(short_alias=True))
 
 
 @app.default
-def pipeline(cmd: PipelineCommand, /, *, arrow: ArrowStyle | None = None) -> None:
+def pipeline(
+    cmd: PipelineCommand,
+    /,
+    *,
+    arrow: ArrowStyle | None = None,
+    layout: Literal["panel", "tree"] = "panel",
+) -> None:
     """Render a pipeline diagram from a command string.
 
     Args:
         cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
+        layout (Literal["panel", "tree"]): Layout style of the visualization. Defaults to "panel".
+
+    Raises:
+        NotImplementedError: If the requested tree layout is not implemented.
     """
-    stages = stdin_parser.parse(cmd)
-    standard_render.render(stages, arrow_style=arrow or "standard")
+    parsed_pipeline = standard_parser.parse(cmd)
+
+    match layout:
+        case "panel":
+            standard_render.render(parsed_pipeline, arrow_style=arrow or "standard")
+        case "tree":
+            raise NotImplementedError("Tree layout rendering is not implemented yet.")
 
 
 if __name__ == "__main__":

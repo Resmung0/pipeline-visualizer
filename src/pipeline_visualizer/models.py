@@ -42,10 +42,3 @@ class Pipeline:
     def execute(self) -> None:
         """Execute the pipeline."""
         # Placeholder for execution logic
-
-
-# @dataclass
-# class PolishNotationPipeline:
-#     pipeline: tuple[
-#         Delimiter, "Stage | PolishNotationPipeline", "Stage | PolishNotationPipeline"
-#     ]

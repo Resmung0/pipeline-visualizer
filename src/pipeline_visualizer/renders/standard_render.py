@@ -1,8 +1,7 @@
 """Render pipeline stages using rich panels and arrows."""
 
 import shlex
-from collections.abc import Callable, Iterator
-from dataclasses import dataclass
+from collections.abc import Iterator
 from itertools import count
 
 from loguru import logger
@@ -13,11 +12,7 @@ from rich.text import Text
 
 from pipeline_visualizer.constants import ARROW_STYLE_COLOR
 from pipeline_visualizer.enums import (
-    DiagonalArrow,
-    HorizontalArrow,
     Operator,
-    Redirect,
-    VerticalArrow,
 )
 from pipeline_visualizer.models import Pipeline, Stage
 from pipeline_visualizer.types import ArrowStyle
@@ -25,77 +20,24 @@ from pipeline_visualizer.types import ArrowStyle
 console = Console()
 
 
-
-@dataclass(frozen=True)
-class ConnectorConfig:
-    """Configuration for rendering a delimiter connector."""
-
-    arrow_factory: Callable[[ArrowStyle], str]
-    horizontal: bool
-
-
-DELIMITER_RENDER_CONFIG: dict[Operator | Redirect, ConnectorConfig] = {
-    Operator.PIPE: ConnectorConfig(
-        lambda style: VerticalArrow[style.upper()], horizontal=False
-    ),
-    Operator.AND: ConnectorConfig(
-        lambda style: HorizontalArrow[style.upper()], horizontal=True
-    ),
-    Operator.OR: ConnectorConfig(
-        lambda style: DiagonalArrow[style.upper()], horizontal=True
-    ),
-    Operator.SEMICOLON: ConnectorConfig(
-        lambda style: HorizontalArrow[style.upper()], horizontal=True
-    ),
-    Redirect.OUT: ConnectorConfig(lambda _style: Redirect.OUT.value, horizontal=False),
-    Redirect.OUT_APPEND: ConnectorConfig(
-        lambda _style: Redirect.OUT_APPEND.value, horizontal=False
-    ),
-    Redirect.IN: ConnectorConfig(lambda _style: Redirect.IN.value, horizontal=False),
-    Redirect.IN_APPEND: ConnectorConfig(
-        lambda _style: Redirect.IN_APPEND.value, horizontal=False
-    ),
-}
-
-# Ensure all supported delimiters are configured
-for delimiter in list(Operator) + list(Redirect):
-    if delimiter not in DELIMITER_RENDER_CONFIG:
-        raise RuntimeError(f"Delimiter {delimiter} is missing from DELIMITER_RENDER_CONFIG")
-
-
-
-def _stage_command(stage: Stage) -> str:
-    return " ".join(
+def _render_stage(stage: Stage, stage_id: int) -> Panel:
+    command = " ".join(
         part for part in (stage.command, stage.subcommand, stage.parameter) if part
     )
-
-
-def _split_command(command: str) -> list[str]:
     try:
-        return shlex.split(command)
+        tokens = shlex.split(command)
     except ValueError:
-        return command.split()
+        tokens = command.split()
+    if not command:
+        tokens = [command]
 
-
-def _render_stage(stage: Stage, stage_id: int) -> Panel:
-    command = _stage_command(stage)
-    tokens = _split_command(command) or [command]
     executable, *args = tokens
-
     content = Text(executable, style="bold cyan")
     if args:
         content.append("\n")
         content.append(" ".join(args), style="dim")
 
     return Panel(content, title=f"[dim]Stage {stage_id + 1}[/]", expand=False)
-
-
-def _choose_connector(delimiter: Operator | Redirect, arrow_style: ArrowStyle) -> str:
-    try:
-        config = DELIMITER_RENDER_CONFIG[delimiter]
-    except KeyError:
-        raise RuntimeError(f"Delimiter {delimiter} unsupported!") from None
-    return config.arrow_factory(arrow_style)
 
 
 def _render_horizontal(stages: list[RenderableType], connector: str) -> Table:
@@ -161,8 +103,8 @@ def _render_or_below_and(
     left_stage = _render_node(left.left, arrow_style, stage_counter)
     and_stage = _render_node(left.right, arrow_style, stage_counter)
     or_stage = _render_node(node.right, arrow_style, stage_counter)
-    and_connector = _choose_connector(left.delimiter, arrow_style)
-    or_connector = _choose_connector(node.delimiter, arrow_style)
+    and_connector = left.delimiter.arrow_style(arrow_style)
+    or_connector = node.delimiter.arrow_style(arrow_style)
 
     return _render_branch_alignment(
         left_stage,
@@ -171,13 +113,6 @@ def _render_or_below_and(
         or_connector,
         or_stage,
     )
-
-
-def _is_horizontal(delimiter: Operator | Redirect) -> bool:
-    try:
-        return DELIMITER_RENDER_CONFIG[delimiter].horizontal
-    except KeyError:
-        raise RuntimeError(f"Delimiter {delimiter} unsupported!") from None
 
 
 def _render_node(
@@ -197,21 +132,20 @@ def _render_node(
         _render_node(node.left, arrow_style, stage_counter),
         _render_node(node.right, arrow_style, stage_counter),
     ]
-    connector = _choose_connector(node.delimiter, arrow_style)
-
-    if _is_horizontal(node.delimiter):
+    connector = node.delimiter.arrow_style(arrow_style)
+    if node.delimiter.is_horizontal():
         return _render_horizontal(rendered_children, connector)
 
     return _render_vertical(rendered_children, connector)
 
 
 @logger.catch
-def render(stages: Stage | Pipeline, arrow_style: ArrowStyle) -> None:
+def render(node: Stage | Pipeline, arrow_style: ArrowStyle) -> None:
     """Render a pipeline with the specified stages and arrow style.
 
     Args:
-        stages (Stage | Pipeline): The pipeline structure containing stages to render.
+        node (Stage | Pipeline): The pipeline structure containing stages to render.
         arrow_style (ArrowStyle): The arrow style configuration for connecting stages.
     """
-    rendered_node = _render_node(stages, arrow_style, count())
+    rendered_node = _render_node(node, arrow_style, count())
     console.print(rendered_node)
