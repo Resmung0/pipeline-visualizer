@@ -6,6 +6,9 @@ with associated display symbols.
 """
 
 from enum import StrEnum
+from typing import Literal
+
+DelimiterSymbol = Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]
 
 
 class Operator(StrEnum):
