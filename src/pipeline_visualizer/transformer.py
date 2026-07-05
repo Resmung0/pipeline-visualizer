@@ -12,16 +12,16 @@ from pipeline_visualizer.models import Pipeline, Stage
 class PipelineTransformer(Transformer):
     """Transform parse trees into pipeline AST nodes."""
 
-    def COMMAND(self, token: Any) -> Stage:  # noqa: N802
-        """Convert a COMMAND token into a Stage node.
+    def command(self, *tokens: Any) -> Stage:
+        """Convert one or more COMMAND tokens into a single Stage node.
 
         Args:
-            token (Any): The COMMAND token from the parse tree.
+            tokens (Any): The COMMAND tokens from the parse tree.
 
         Returns:
-            Stage: A new Stage node representing the command.
+            Stage: A new Stage node representing the command with arguments.
         """
-        return Stage(str(token))
+        return Stage(" ".join(map(str, tokens)))
 
     def pipe(self, left: Stage | Pipeline, right: Stage | Pipeline) -> Pipeline:
         """Create a pipeline node for the pipe operator.

@@ -43,8 +43,10 @@ def parse(pipeline_cmd: str) -> Pipeline:
                 | redirect_expr "<" atom   -> redirect_in
                 | redirect_expr "<<" atom   -> redirect_in_append
 
-    ?atom: COMMAND
+    ?atom: command
         | "(" or_expr ")"
+
+    command: COMMAND+
 
     COMMAND: /[^|&<>()\s]+/
 
