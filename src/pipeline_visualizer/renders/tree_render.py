@@ -1,6 +1,5 @@
 """Render pipeline stages using a tree structure."""
 
-from loguru import logger
 from rich.console import Console
 from rich.tree import Tree
 
@@ -58,16 +57,20 @@ def _flatten_logical_structure(
         left_flattened = _flatten_logical_structure(node.left)
         right_flattened = _flatten_logical_structure(node.right)
 
-        # The first element of the right flattened list gets the current delimiter
-        head, *tail = right_flattened
-        right_flattened = [(head[0], node.delimiter)] + tail  # type: ignore[arg-type]
-
-        return left_flattened + right_flattened
+        # Update the first element of the right flattened list with the current delimiter
+        first_right_node, _ = right_flattened[0]
+        # Cast node.delimiter to Operator since we checked it's one of the Operator members above
+        op = node.delimiter
+        if isinstance(op, Operator):
+            updated_right_head: tuple[Stage | Pipeline, Operator | None] = (
+                first_right_node,
+                op,
+            )
+            return left_flattened + [updated_right_head] + right_flattened[1:]
 
     return [(node, None)]
 
 
-@logger.catch
 def render(pipeline: Stage | Pipeline) -> None:
     """Render the pipeline in a tree format.
 
@@ -90,12 +93,15 @@ def render(pipeline: Stage | Pipeline) -> None:
         connector = content_node.add("|")
         for i, (node, operator) in enumerate(flattened[1:], start=2):
             icon = "✅"
+            operator_label = "&&"
             if operator == Operator.OR:
                 icon = "🔀"
+                operator_label = "||"
             elif operator == Operator.SEMICOLON:
                 icon = "⌛"
+                operator_label = ";"
 
-            st = connector.add(f"{icon} Stage {i}")
+            st = connector.add(f"{icon} Stage {i} ({operator_label})")
             st.add(_format_node(node))
 
     console.print(tree)
