@@ -47,15 +47,21 @@ DELIMITER_RENDER_CONFIG: dict[Operator | Redirect, ConnectorConfig] = {
     Operator.SEMICOLON: ConnectorConfig(
         lambda style: HorizontalArrow[style.upper()], horizontal=True
     ),
-    Redirect.OUT: ConnectorConfig(lambda _style: Redirect.OUT.value, horizontal=True),
+    Redirect.OUT: ConnectorConfig(lambda _style: Redirect.OUT.value, horizontal=False),
     Redirect.OUT_APPEND: ConnectorConfig(
-        lambda _style: Redirect.OUT_APPEND.value, horizontal=True
+        lambda _style: Redirect.OUT_APPEND.value, horizontal=False
     ),
-    Redirect.IN: ConnectorConfig(lambda _style: Redirect.IN.value, horizontal=True),
+    Redirect.IN: ConnectorConfig(lambda _style: Redirect.IN.value, horizontal=False),
     Redirect.IN_APPEND: ConnectorConfig(
-        lambda _style: Redirect.IN_APPEND.value, horizontal=True
+        lambda _style: Redirect.IN_APPEND.value, horizontal=False
     ),
 }
+
+# Ensure all supported delimiters are configured
+for delimiter in list(Operator) + list(Redirect):
+    if delimiter not in DELIMITER_RENDER_CONFIG:
+        raise RuntimeError(f"Delimiter {delimiter} is missing from DELIMITER_RENDER_CONFIG")
+
 
 
 def _stage_command(stage: Stage) -> str:
