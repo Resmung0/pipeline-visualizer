@@ -40,10 +40,8 @@ PIPELINE_GRAMMAR = r"""
     %ignore /\s+/
 """
 
-# Cria o parser apenas uma vez em nível de módulo
-_PARSER = Lark(
-    PIPELINE_GRAMMAR, start="start", parser="lalr", transformer=PipelineTransformer()
-)
+# Global parser instance for caching
+_PARSER: Lark | None = None
 
 
 @logger.catch
@@ -56,4 +54,14 @@ def parse(pipeline_cmd: str) -> Pipeline:
     Returns:
         Pipeline: Pipeline representation.
     """
-    return _PARSER.parse(pipeline_cmd.strip())  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+    global _PARSER  # noqa: PLW0603
+    if _PARSER is None:
+        # Lazy initialization ensures that errors during parser construction
+        # (like grammar issues) are caught by @logger.catch and that
+        # expensive work is only done once.
+        _PARSER = Lark(PIPELINE_GRAMMAR, start="start", parser="lalr")
+
+    # We instantiate the transformer per call to ensure it's stateless and
+    # safe for repeated use, as per code review suggestions.
+    tree = _PARSER.parse(pipeline_cmd.strip())
+    return PipelineTransformer().transform(tree)  # type: ignore[return-value]
