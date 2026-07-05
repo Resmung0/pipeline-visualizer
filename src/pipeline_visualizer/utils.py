@@ -4,22 +4,17 @@ This module provides functions to extract shell operator and redirection
 delimiter symbols from the corresponding enums.
 """
 
-from typing import Literal
-
-from .enums import Operator, Redirect
+from .enums import DelimiterSymbol, Operator, Redirect
 
 
-def extract_delimiters() -> list[Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]]:
+def extract_delimiters() -> tuple[DelimiterSymbol, ...]:
     """Return shell operator and redirection delimiters.
 
+    The delimiters are returned in the order they are defined in the
+    Operator and Redirect enums.
+
     Returns:
-        list[Literal["|", "&&", "||", ";", ">", ">>", "<", "<<"]]: The
-        delimiters are extracted from the Operator and Redirect enums by
-        filtering the enum members and collecting their symbol values.
+        tuple[DelimiterSymbol, ...]: The delimiters extracted from the
+        Operator and Redirect enums by collecting their symbol values.
     """
-    extracted_delimiters = []
-    for delimiters in Operator, Redirect:
-        for delimiter in filter(lambda s: s.isupper(), dir(delimiters)):
-            delimiter_symbol = delimiters[delimiter].value
-            extracted_delimiters.append(delimiter_symbol)
-    return extracted_delimiters
+    return tuple(member.value for enum in (Operator, Redirect) for member in enum)
