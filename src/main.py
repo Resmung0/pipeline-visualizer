@@ -10,7 +10,7 @@ from typing import Literal
 from cyclopts import App, Parameter
 
 from pipeline_visualizer.parsers import standard_parser
-from pipeline_visualizer.renders import standard_render
+from pipeline_visualizer.renders import standard_render, tree_render
 from pipeline_visualizer.types import ArrowStyle, PipelineCommand
 
 app = App(default_parameter=Parameter(short_alias=True))
@@ -30,9 +30,6 @@ def pipeline(
         cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
         layout (Literal["panel", "tree"]): Layout style of the visualization. Defaults to "panel".
-
-    Raises:
-        NotImplementedError: If the requested tree layout is not implemented.
     """
     parsed_pipeline = standard_parser.parse(cmd)
 
@@ -40,7 +37,7 @@ def pipeline(
         case "panel":
             standard_render.render(parsed_pipeline, arrow_style=arrow or "standard")
         case "tree":
-            raise NotImplementedError("Tree layout rendering is not implemented yet.")
+            tree_render.render(parsed_pipeline)
 
 
 if __name__ == "__main__":
