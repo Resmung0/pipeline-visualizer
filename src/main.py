@@ -30,9 +30,6 @@ def pipeline(
         cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
         layout (Literal["panel", "tree"]): Layout style of the visualization. Defaults to "panel".
-
-    Raises:
-        NotImplementedError: If the requested tree layout is not implemented.
     """
     parsed_pipeline = standard_parser.parse(cmd)
 
