@@ -16,7 +16,7 @@ from pipeline_visualizer.enums import Operator
 from pipeline_visualizer.models import Pipeline, Stage
 from pipeline_visualizer.types import ArrowStyle
 
-console = Console()
+console = Console(color_system="truecolor")
 
 CELL_BACKGROUND = "#351935"
 CELL_GLOW = "#ff196f"
@@ -66,37 +66,17 @@ def _command_text(command: str) -> Text:
     return text
 
 
-def _metadata_text(stage: Stage, stage_id: int) -> Text:
-    """Return a dim metadata line for a stage.
-
-    Args:
-        stage (Stage): The stage that owns the metadata.
-        stage_id (int): The zero-based stage index.
-
-    Returns:
-        Text: The styled metadata line.
-    """
-    metadata = [f"stage {stage_id + 1}"]
-    if stage.duration is not None:
-        metadata.append(str(stage.duration))
-    if stage.throughput is not None:
-        metadata.append(f"{stage.throughput:g}/s")
-    return Text("  ".join(metadata), style=f"bold {CELL_DIM}")
-
-
-def _cell_body(stage: Stage, stage_id: int) -> Table:
+def _cell_body(stage: Stage) -> Table:
     """Build the content area inside a Warp-like cell.
 
     Args:
         stage (Stage): The stage to render.
-        stage_id (int): The zero-based stage index.
 
     Returns:
         Table: The renderable cell body.
     """
     body = Table.grid(expand=True, padding=(0, 0))
     body.add_column(ratio=1, style=f"on {CELL_BACKGROUND}", no_wrap=False)
-    body.add_row(_metadata_text(stage, stage_id))
     body.add_row(_command_text(_format_command(stage)))
     return body
 
@@ -118,7 +98,7 @@ def _render_stage(stage: Stage, stage_id: int) -> Panel:
     table.add_row(
         Text(" ", style=f"on {CELL_ACCENT}"),
         Text("  ", style=f"on {CELL_BACKGROUND}"),
-        Padding(_cell_body(stage, stage_id), (0, 2), style=f"on {CELL_BACKGROUND}"),
+        Padding(_cell_body(stage), (0, 2), style=f"on {CELL_BACKGROUND}"),
     )
 
     return Panel(
@@ -127,6 +107,7 @@ def _render_stage(stage: Stage, stage_id: int) -> Panel:
         padding=(0, 0),
         style=f"on {CELL_BACKGROUND}",
         expand=False,
+        title=Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}"),
     )
 
 
