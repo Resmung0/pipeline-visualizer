@@ -5,7 +5,6 @@ from collections.abc import Iterator
 from itertools import count
 
 from loguru import logger
-from rich import box
 from rich.console import Console, RenderableType
 from rich.padding import Padding
 from rich.panel import Panel
@@ -56,10 +55,10 @@ def _command_text(command: str) -> Text:
         tokens = command.split()
 
     if not tokens:
-        return Text("$", style=f"bold {CELL_TEXT}")
+        return Text("", style=f"bold {CELL_TEXT}")
 
     executable, *args = tokens
-    text = Text("$ ", style=f"bold {CELL_TEXT}")
+    text = Text("", style=f"bold {CELL_TEXT}")
     text.append(executable, style=f"bold {CELL_ACCENT_MUTED}")
     if args:
         text.append(" ")
@@ -114,17 +113,16 @@ def _render_stage(stage: Stage, stage_id: int) -> Panel:
     """
     table = Table.grid(expand=True, padding=(0, 0))
     table.add_column(width=1, style=f"on {CELL_ACCENT}")
-    table.add_column(width=2, style=f"on {CELL_BACKGROUND}")
-    table.add_column(style=f"on {CELL_BACKGROUND}")
+    table.add_column(width=1, style=f"on {CELL_BACKGROUND}")
 
     table.add_row(
         Text(" ", style=f"on {CELL_ACCENT}"),
         Text("  ", style=f"on {CELL_BACKGROUND}"),
-        Padding(_cell_body(stage, stage_id), (1, 2), style=f"on {CELL_BACKGROUND}"),
+        Padding(_cell_body(stage, stage_id), (0, 2), style=f"on {CELL_BACKGROUND}"),
     )
+
     return Panel(
         table,
-        box=box.ROUNDED,
         border_style=CELL_GLOW,
         padding=(0, 0),
         style=f"on {CELL_BACKGROUND}",
