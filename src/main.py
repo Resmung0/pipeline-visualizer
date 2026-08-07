@@ -31,7 +31,7 @@ def pipeline(
         cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
         layout (Literal["panel", "tree"]): Layout style of the visualization. Defaults to "panel".
-        title_position (TitlePosition): Position of the stage name/title in the panels. Defaults to "top".
+        title_position (TitlePosition): Position of the stage name when `layout` is `panel`. Defaults to "top".
     """
     parsed_pipeline = standard_parser.parse(cmd)
 

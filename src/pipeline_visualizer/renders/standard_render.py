@@ -20,9 +20,7 @@ from pipeline_visualizer.types import ArrowStyle, TitlePosition
 console = Console()
 
 
-def _render_stage(
-    stage: Stage, stage_id: int, title_position: TitlePosition = "top"
-) -> Panel:
+def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) -> Panel:
     command = " ".join(
         part for part in (stage.command, stage.subcommand, stage.parameter) if part
     )
@@ -107,21 +105,15 @@ def _render_or_below_and(
     node: Pipeline,
     arrow_style: ArrowStyle,
     stage_counter: Iterator[int],
-    title_position: TitlePosition = "top",
+    title_position: TitlePosition,
 ) -> Table:
     left = node.left
     if not isinstance(left, Pipeline):
         raise TypeError("OR branch alignment requires a pipeline on the left side.")
 
-    left_stage = _render_node(
-        left.left, arrow_style, stage_counter, title_position
-    )
-    and_stage = _render_node(
-        left.right, arrow_style, stage_counter, title_position
-    )
-    or_stage = _render_node(
-        node.right, arrow_style, stage_counter, title_position
-    )
+    left_stage = _render_node(left.left, arrow_style, stage_counter, title_position)
+    and_stage = _render_node(left.right, arrow_style, stage_counter, title_position)
+    or_stage = _render_node(node.right, arrow_style, stage_counter, title_position)
     and_connector = left.delimiter.arrow_style(arrow_style)
     or_connector = node.delimiter.arrow_style(arrow_style)
 
@@ -138,7 +130,7 @@ def _render_node(
     node: Stage | Pipeline,
     arrow_style: ArrowStyle,
     stage_counter: Iterator[int],
-    title_position: TitlePosition = "top",
+    title_position: TitlePosition,
 ) -> RenderableType:
     if isinstance(node, Stage):
         return _render_stage(node, next(stage_counter), title_position)
@@ -148,17 +140,11 @@ def _render_node(
         and isinstance(node.left, Pipeline)
         and node.left.delimiter == Operator.AND
     ):
-        return _render_or_below_and(
-            node, arrow_style, stage_counter, title_position
-        )
+        return _render_or_below_and(node, arrow_style, stage_counter, title_position)
 
     rendered_children = [
-        _render_node(
-            node.left, arrow_style, stage_counter, title_position
-        ),
-        _render_node(
-            node.right, arrow_style, stage_counter, title_position
-        ),
+        _render_node(node.left, arrow_style, stage_counter, title_position),
+        _render_node(node.right, arrow_style, stage_counter, title_position),
     ]
     connector = node.delimiter.arrow_style(arrow_style)
     if node.delimiter.is_horizontal():
@@ -171,7 +157,7 @@ def _render_node(
 def render(
     node: Stage | Pipeline,
     arrow_style: ArrowStyle,
-    title_position: TitlePosition = "top",
+    title_position: TitlePosition,
 ) -> None:
     """Render a pipeline with the specified stages and arrow style.
 
