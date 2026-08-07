@@ -17,3 +17,4 @@ type ArrowStyle = Literal["standard", "alternative", "triangle"]
 type Arrow = HorizontalArrow | VerticalArrow | DiagonalArrow
 type Delimiter = Operator | Redirect
 type PipelineCommand = Annotated[str, Parameter(validator=validate_cmd)]
+type TitlePosition = Literal["top", "bottom"]
