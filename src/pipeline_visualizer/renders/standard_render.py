@@ -15,12 +15,12 @@ from pipeline_visualizer.enums import (
     Operator,
 )
 from pipeline_visualizer.models import Pipeline, Stage
-from pipeline_visualizer.types import ArrowStyle
+from pipeline_visualizer.types import ArrowStyle, TitlePosition
 
 console = Console()
 
 
-def _render_stage(stage: Stage, stage_id: int) -> Panel:
+def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) -> Panel:
     command = " ".join(
         part for part in (stage.command, stage.subcommand, stage.parameter) if part
     )
@@ -37,7 +37,15 @@ def _render_stage(stage: Stage, stage_id: int) -> Panel:
         content.append("\n")
         content.append(" ".join(args), style="dim")
 
-    return Panel(content, title=f"[dim]Stage {stage_id + 1}[/]", expand=False)
+    title_text = f"[dim]Stage {stage_id + 1}[/]"
+    if title_position == "bottom":
+        max_content_len = len(executable)
+        if args:
+            max_content_len = max(max_content_len, len(" ".join(args)))
+        title_plain = f"Stage {stage_id + 1}"
+        panel_width = max(max_content_len + 4, len(title_plain) + 6)
+        return Panel(content, subtitle=title_text, width=panel_width, expand=True)
+    return Panel(content, title=title_text, expand=False)
 
 
 def _render_horizontal(stages: list[RenderableType], connector: str) -> Table:
@@ -94,15 +102,18 @@ def _render_branch_alignment(
 
 
 def _render_or_below_and(
-    node: Pipeline, arrow_style: ArrowStyle, stage_counter: Iterator[int]
+    node: Pipeline,
+    arrow_style: ArrowStyle,
+    stage_counter: Iterator[int],
+    title_position: TitlePosition,
 ) -> Table:
     left = node.left
     if not isinstance(left, Pipeline):
         raise TypeError("OR branch alignment requires a pipeline on the left side.")
 
-    left_stage = _render_node(left.left, arrow_style, stage_counter)
-    and_stage = _render_node(left.right, arrow_style, stage_counter)
-    or_stage = _render_node(node.right, arrow_style, stage_counter)
+    left_stage = _render_node(left.left, arrow_style, stage_counter, title_position)
+    and_stage = _render_node(left.right, arrow_style, stage_counter, title_position)
+    or_stage = _render_node(node.right, arrow_style, stage_counter, title_position)
     and_connector = left.delimiter.arrow_style(arrow_style)
     or_connector = node.delimiter.arrow_style(arrow_style)
 
@@ -116,21 +127,24 @@ def _render_or_below_and(
 
 
 def _render_node(
-    node: Stage | Pipeline, arrow_style: ArrowStyle, stage_counter: Iterator[int]
+    node: Stage | Pipeline,
+    arrow_style: ArrowStyle,
+    stage_counter: Iterator[int],
+    title_position: TitlePosition,
 ) -> RenderableType:
     if isinstance(node, Stage):
-        return _render_stage(node, next(stage_counter))
+        return _render_stage(node, next(stage_counter), title_position)
 
     if (
         node.delimiter == Operator.OR
         and isinstance(node.left, Pipeline)
         and node.left.delimiter == Operator.AND
     ):
-        return _render_or_below_and(node, arrow_style, stage_counter)
+        return _render_or_below_and(node, arrow_style, stage_counter, title_position)
 
     rendered_children = [
-        _render_node(node.left, arrow_style, stage_counter),
-        _render_node(node.right, arrow_style, stage_counter),
+        _render_node(node.left, arrow_style, stage_counter, title_position),
+        _render_node(node.right, arrow_style, stage_counter, title_position),
     ]
     connector = node.delimiter.arrow_style(arrow_style)
     if node.delimiter.is_horizontal():
@@ -140,12 +154,17 @@ def _render_node(
 
 
 @logger.catch
-def render(node: Stage | Pipeline, arrow_style: ArrowStyle) -> None:
+def render(
+    node: Stage | Pipeline,
+    arrow_style: ArrowStyle,
+    title_position: TitlePosition,
+) -> None:
     """Render a pipeline with the specified stages and arrow style.
 
     Args:
         node (Stage | Pipeline): The pipeline structure containing stages to render.
         arrow_style (ArrowStyle): The arrow style configuration for connecting stages.
+        title_position (TitlePosition): The position of the stage title ("top" or "bottom").
     """
-    rendered_node = _render_node(node, arrow_style, count())
+    rendered_node = _render_node(node, arrow_style, count(), title_position)
     console.print(rendered_node)
