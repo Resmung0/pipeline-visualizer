@@ -1,7 +1,21 @@
 [tool.poe.tasks]
 clean = { help = "Remove cached files", script = "poethepoet.scripts:rm('./**/__pycache__', '.pytest_cache', '.ruff_cache')" }
-simple-test = "uv run --exact viz 'a && b | c'"
 init = { help = "Initialize project configuration for development", cmd = "prek install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push" }
+
+[tool.poe.groups.view]
+heading = "Tasks related to view pipeline renders"
+    [tool.poe.groups.development.tasks.view-panel]
+    help = "View pipeline using panel layout mode"
+    cmd = "uv run --exact viz 'a && b | c'"
+
+    [tool.poe.groups.development.tasks.view-tree]
+    help = "View pipeline using tree layout mode"
+    cmd = "uv run --exact viz 'a && b | c' --layout tree"
+    
+    [tool.poe.groups.development.tasks.view-neon]
+    help = "View pipeline using neon layout mode"
+    cmd = "uv run --exact viz 'a && b | c' --layout warp"
+
 
 [tool.poe.groups.development]
 heading = "Tasks related to development"

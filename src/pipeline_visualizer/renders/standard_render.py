@@ -10,14 +10,21 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from pipeline_visualizer.constants import ARROW_STYLE_COLOR
+from pipeline_visualizer.constants import (
+    ARROW_STYLE_COLOR,
+    CELL_ACCENT_MUTED,
+    CELL_BACKGROUND,
+    CELL_DIM,
+    CELL_GLOW,
+    CELL_TEXT,
+)
 from pipeline_visualizer.enums import (
     Operator,
 )
 from pipeline_visualizer.models import Pipeline, Stage
 from pipeline_visualizer.types import ArrowStyle, TitlePosition
 
-console = Console()
+console = Console(color_system="truecolor")
 
 
 def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) -> Panel:
@@ -32,20 +39,19 @@ def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) ->
         tokens = [command]
 
     executable, *args = tokens
-    content = Text(executable, style="bold cyan")
+    content = Text(executable, style=f"bold {CELL_ACCENT_MUTED}")
     if args:
         content.append("\n")
-        content.append(" ".join(args), style="dim")
+        content.append(" ".join(args), style=f"bold {CELL_TEXT}")
 
-    title_text = f"[dim]Stage {stage_id + 1}[/]"
-    if title_position == "bottom":
-        max_content_len = len(executable)
-        if args:
-            max_content_len = max(max_content_len, len(" ".join(args)))
-        title_plain = f"Stage {stage_id + 1}"
-        panel_width = max(max_content_len + 4, len(title_plain) + 6)
-        return Panel(content, subtitle=title_text, width=panel_width, expand=True)
-    return Panel(content, title=title_text, expand=False)
+    return Panel(
+        content,
+        title=Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}"),
+        border_style=CELL_GLOW,
+        padding=(0, 1),
+        style=f"on {CELL_BACKGROUND}",
+        expand=False,
+    )
 
 
 def _render_horizontal(stages: list[RenderableType], connector: str) -> Table:
