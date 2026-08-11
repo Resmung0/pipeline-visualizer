@@ -150,17 +150,12 @@ def _render_or_below_and(
     Returns:
         Table: The aligned branch layout.
 
-    Raises:
-        TypeError: If the left side of the OR node is not an AND pipeline.
-    """
-    left = node.left
-    if not isinstance(left, Pipeline):
-        raise TypeError("OR branch alignment requires a pipeline on the left side.")
 
-    left_stage = _render_node(left.left, arrow_style, stage_counter)
-    and_stage = _render_node(left.right, arrow_style, stage_counter)
+    """
+    left_stage = _render_node(node.left, arrow_style, stage_counter)
+    and_stage = _render_node(node.right, arrow_style, stage_counter)
     or_stage = _render_node(node.right, arrow_style, stage_counter)
-    and_connector = left.delimiter.arrow_style(arrow_style)
+    and_connector = node.delimiter.arrow_style(arrow_style)
     or_connector = node.delimiter.arrow_style(arrow_style)
 
     return _render_branch_alignment(
