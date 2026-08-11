@@ -113,14 +113,10 @@ def _render_or_below_and(
     stage_counter: Iterator[int],
     title_position: TitlePosition,
 ) -> Table:
-    left = node.left
-    if not isinstance(left, Pipeline):
-        raise TypeError("OR branch alignment requires a pipeline on the left side.")
-
-    left_stage = _render_node(left.left, arrow_style, stage_counter, title_position)
-    and_stage = _render_node(left.right, arrow_style, stage_counter, title_position)
+    left_stage = _render_node(node.left, arrow_style, stage_counter, title_position)
+    and_stage = _render_node(node.right, arrow_style, stage_counter, title_position)
     or_stage = _render_node(node.right, arrow_style, stage_counter, title_position)
-    and_connector = left.delimiter.arrow_style(arrow_style)
+    and_connector = node.delimiter.arrow_style(arrow_style)
     or_connector = node.delimiter.arrow_style(arrow_style)
 
     return _render_branch_alignment(
