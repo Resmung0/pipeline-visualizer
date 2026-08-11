@@ -138,3 +138,27 @@ class Redirect(StrEnum):
             bool: True if the operator is horizontal, False otherwise.
         """
         return False
+
+
+class PipelineStatus(StrEnum):
+    ERROR = "⊘"
+    SUCCESS = "◆"
+    PENDING = "◇"
+    RUNNING = "◈"
+    WARNING = "⚠"
+    SKIPPED = "↻"
+
+
+class StageStatus(StrEnum):
+    ERROR = "⊘"
+    SUCCESS = "●"
+    PENDING = "○"
+    RUNNING = "◉"
+    WARNING = "⚠"
+    SKIPPED = "↻"
+
+
+class TreeConnector(StrEnum):
+    connectors = "│"
+    branch = "├─"
+    last_branch = "└─"
