@@ -11,7 +11,11 @@ heading = "Tasks related to view pipeline renders"
     [tool.poe.groups.development.tasks.view-tree]
     help = "View pipeline using tree layout mode"
     cmd = "uv run --exact viz 'a && b | c' --layout tree"
-    
+
+    [tool.poe.groups.development.tasks.view-badge]
+    help = "View pipeline using badge layout mode"
+    cmd = "uv run --exact viz 'a && b | c' --layout badge"
+
     [tool.poe.groups.development.tasks.view-neon]
     help = "View pipeline using neon layout mode"
     cmd = "uv run --exact viz 'a && b | c' --layout warp"

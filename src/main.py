@@ -10,7 +10,7 @@ from typing import Literal
 from cyclopts import App, Parameter
 
 from pipeline_visualizer.parsers import standard_parser
-from pipeline_visualizer.renders import standard_render, tree_render
+from pipeline_visualizer.renders import badge_render, standard_render, tree_render
 from pipeline_visualizer.types import ArrowStyle, PipelineCommand, TitlePosition
 
 app = App(default_parameter=Parameter(short_alias=True))
@@ -22,7 +22,7 @@ def pipeline(
     /,
     *,
     arrow: ArrowStyle | None = None,
-    layout: Literal["panel", "tree"] = "panel",
+    layout: Literal["panel", "tree", "badge"] = "panel",
     title_position: TitlePosition = "top",
 ) -> None:
     """Render a pipeline diagram from a command string.
@@ -30,7 +30,7 @@ def pipeline(
     Args:
         cmd (PipelineCommand): The shell pipeline command to visualize.
         arrow (ArrowStyle | None): Arrow style of the visualization. Defaults to None.
-        layout (Literal["panel", "tree"]): Layout style of the visualization. Defaults to "panel".
+        layout (Literal["panel", "tree", "badge"]): Layout style of the visualization. Defaults to "panel".
         title_position (TitlePosition): Position of the stage name when `layout` is `panel`. Defaults to "top".
     """
     parsed_pipeline = standard_parser.parse(cmd)
@@ -44,6 +44,11 @@ def pipeline(
             )
         case "tree":
             tree_render.render(parsed_pipeline)
+        case "badge":
+            badge_render.render(
+                parsed_pipeline,
+                arrow_style=arrow or "standard",
+            )
 
 
 if __name__ == "__main__":
