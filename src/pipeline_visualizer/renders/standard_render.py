@@ -27,6 +27,30 @@ from pipeline_visualizer.types import ArrowStyle, TitlePosition
 console = Console(color_system="truecolor")
 
 
+def __set_title(
+    position: TitlePosition, stage_id: int, executable: str, args: list[str]
+) -> tuple[Text | None, Text | None, int | None, bool]:
+    stage_title_text = Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}")
+
+    title: Text | None = None
+    subtitle: Text | None = None
+    expand = False
+    width: int | None = None
+
+    if position == "bottom":
+        stage_title_str = f"Stage {stage_id + 1}"
+        content_width = len(executable)
+        if args:
+            content_width = max(content_width, len(" ".join(args)))
+        width = max(content_width + 4, len(stage_title_str) + 6)
+        subtitle = stage_title_text
+        expand = True
+    else:
+        title = stage_title_text
+
+    return title, subtitle, width, expand
+
+
 def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) -> Panel:
     command = " ".join(
         part for part in (stage.command, stage.subcommand, stage.parameter) if part
@@ -44,23 +68,9 @@ def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) ->
         content.append("\n")
         content.append(" ".join(args), style=f"bold {CELL_TEXT}")
 
-    stage_title_text = Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}")
-
-    title: Text | None = None
-    subtitle: Text | None = None
-    expand = False
-    width: int | None = None
-
-    if title_position == "bottom":
-        stage_title_str = f"Stage {stage_id + 1}"
-        content_width = len(executable)
-        if args:
-            content_width = max(content_width, len(" ".join(args)))
-        width = max(content_width + 4, len(stage_title_str) + 6)
-        subtitle = stage_title_text
-        expand = True
-    else:
-        title = stage_title_text
+    title, subtitle, width, expand = __set_title(
+        title_position, stage_id, executable, args
+    )
 
     return Panel(
         content,
