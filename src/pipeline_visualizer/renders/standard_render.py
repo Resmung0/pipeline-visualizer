@@ -44,13 +44,33 @@ def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) ->
         content.append("\n")
         content.append(" ".join(args), style=f"bold {CELL_TEXT}")
 
+    stage_title_text = Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}")
+
+    title: Text | None = None
+    subtitle: Text | None = None
+    expand = False
+    width: int | None = None
+
+    if title_position == "bottom":
+        stage_title_str = f"Stage {stage_id + 1}"
+        content_width = len(executable)
+        if args:
+            content_width = max(content_width, len(" ".join(args)))
+        width = max(content_width + 4, len(stage_title_str) + 6)
+        subtitle = stage_title_text
+        expand = True
+    else:
+        title = stage_title_text
+
     return Panel(
         content,
-        title=Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}"),
+        title=title,
+        subtitle=subtitle,
         border_style=CELL_GLOW,
         padding=(0, 1),
         style=f"on {CELL_BACKGROUND}",
-        expand=False,
+        expand=expand,
+        width=width,
     )
 
 
