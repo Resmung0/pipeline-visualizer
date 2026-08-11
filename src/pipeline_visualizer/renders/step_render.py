@@ -10,7 +10,6 @@ from rich.text import Text
 from pipeline_visualizer.enums import (
     Operator,
     PipelineStatus,
-    Redirect,
     StageStatus,
     TreeConnector,
 )
@@ -122,48 +121,42 @@ def _ast_to_tree_nodes(
     default_status: StageStatus = StageStatus.SUCCESS,
     default_pipeline_status: PipelineStatus = PipelineStatus.SUCCESS,
 ) -> list[dict]:
-    """Convert pipeline AST into tree nodes for rendering.
+    """Convert pipeline AST into numbered Stage tree nodes for rendering.
 
-    Logical AND elements use PipelineStatus.SUCCESS ('◆').
-    Piped stages under pipelines use StageStatus.SUCCESS ('●').
+    Displays 'Stage 1', 'Stage 2', etc. next to PipelineStatus.SUCCESS ('◆'),
+    and places command details below in dark gray with StageStatus.SUCCESS ('●').
 
     Args:
         node (Stage | Pipeline): Pipeline AST node.
-        default_status (StageStatus): Status for stage items.
-        default_pipeline_status (PipelineStatus): Status for pipeline items.
+        default_status (StageStatus): Default status for stage items.
+        default_pipeline_status (PipelineStatus): Default status for pipeline items.
 
     Returns:
         list[dict]: Hierarchy of tree nodes for rendering.
     """
-    if isinstance(node, Stage):
-        return [
-            {
-                "symbol": default_status.value,
-                "status": default_status,
-                "label": _format_stage(node),
-                "children": [],
-            }
-        ]
-
-    delim = node.delimiter
-
-    if delim in (Operator.AND, Operator.OR, Operator.SEMICOLON):
+    if isinstance(node, Pipeline) and node.delimiter in (
+        Operator.AND,
+        Operator.OR,
+        Operator.SEMICOLON,
+    ):
         logical_items = _flatten_logical(node)
         tree_nodes: list[dict] = []
-        for item, op in logical_items:
+        for idx, (item, op) in enumerate(logical_items, start=1):
             item_status = (
                 PipelineStatus.ERROR if op == Operator.OR else default_pipeline_status
             )
+            stage_title = f"Stage {idx}"
 
             if isinstance(item, Stage):
-                tree_nodes.append(
+                children = [
                     {
-                        "symbol": item_status.value,
-                        "status": item_status,
+                        "symbol": default_status.value,
+                        "status": default_status,
                         "label": _format_stage(item),
+                        "is_command": True,
                         "children": [],
                     }
-                )
+                ]
             elif isinstance(item, Pipeline) and item.delimiter == Operator.PIPE:
                 pipe_stages = _flatten_pipe(item)
                 children = [
@@ -171,56 +164,72 @@ def _ast_to_tree_nodes(
                         "symbol": default_status.value,
                         "status": default_status,
                         "label": _format_stage(s),
+                        "is_command": True,
                         "children": [],
                     }
                     for s in pipe_stages
                 ]
-                tree_nodes.append(
-                    {
-                        "symbol": item_status.value,
-                        "status": item_status,
-                        "label": _format_node(item),
-                        "children": children,
-                    }
-                )
             else:
-                tree_nodes.append(
+                children = [
                     {
-                        "symbol": item_status.value,
-                        "status": item_status,
+                        "symbol": default_status.value,
+                        "status": default_status,
                         "label": _format_node(item),
-                        "children": _ast_to_tree_nodes(
-                            item, default_status, default_pipeline_status
-                        )
-                        if isinstance(item, Pipeline)
-                        else [],
+                        "is_command": True,
+                        "children": [],
                     }
-                )
+                ]
+
+            tree_nodes.append(
+                {
+                    "symbol": item_status.value,
+                    "status": item_status,
+                    "label": stage_title,
+                    "is_command": False,
+                    "children": children,
+                }
+            )
         return tree_nodes
 
-    if delim == Operator.PIPE:
+    if isinstance(node, Pipeline) and node.delimiter == Operator.PIPE:
         pipe_stages = _flatten_pipe(node)
-        return [
+        children = [
             {
                 "symbol": default_status.value,
                 "status": default_status,
                 "label": _format_stage(s),
+                "is_command": True,
                 "children": [],
             }
             for s in pipe_stages
         ]
-
-    if isinstance(delim, Redirect):
         return [
             {
-                "symbol": default_status.value,
-                "status": default_status,
-                "label": _format_node(node),
-                "children": [],
+                "symbol": default_pipeline_status.value,
+                "status": default_pipeline_status,
+                "label": "Stage 1",
+                "is_command": False,
+                "children": children,
             }
         ]
 
-    return []
+    return [
+        {
+            "symbol": default_pipeline_status.value,
+            "status": default_pipeline_status,
+            "label": "Stage 1",
+            "is_command": False,
+            "children": [
+                {
+                    "symbol": default_status.value,
+                    "status": default_status,
+                    "label": _format_node(node),
+                    "is_command": True,
+                    "children": [],
+                }
+            ],
+        }
+    ]
 
 
 def _render_tree_nodes(
@@ -249,7 +258,9 @@ def _render_tree_nodes(
 
         status_val = n.get("status", StageStatus.SUCCESS)
         line.append(n["symbol"], style=_status_style(status_val))
-        line.append(f" {n['label']}")
+
+        label_style = "dim" if n.get("is_command") else "bold white"
+        line.append(f" {n['label']}", style=label_style)
         lines.append(line)
 
         if n["children"]:
@@ -274,8 +285,8 @@ def render(
     Args:
         pipeline (Stage | Pipeline): The parsed pipeline AST to render.
         title (str): Panel title for the pipeline visualization. Defaults to "Pipeline".
-        status (StageStatus): Default status for stages in pipe. Defaults to StageStatus.SUCCESS.
-        pipeline_status (PipelineStatus): Default status for pipeline AND nodes. Defaults to PipelineStatus.SUCCESS.
+        status (StageStatus): Default status for commands in pipe. Defaults to StageStatus.SUCCESS.
+        pipeline_status (PipelineStatus): Default status for pipeline Stage nodes. Defaults to PipelineStatus.SUCCESS.
         border_style (str): Border style for the Rich panel. Defaults to "dim".
     """
     nodes = _ast_to_tree_nodes(
