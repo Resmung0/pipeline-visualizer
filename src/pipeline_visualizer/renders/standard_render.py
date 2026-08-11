@@ -6,6 +6,7 @@ from itertools import count
 
 from loguru import logger
 from rich.console import Console, RenderableType
+from rich.measure import Measurement
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -28,7 +29,7 @@ console = Console(color_system="truecolor")
 
 
 def __set_title(
-    position: TitlePosition, stage_id: int, executable: str, args: list[str]
+    position: TitlePosition, stage_id: int, content: Text
 ) -> tuple[Text | None, Text | None, int | None, bool]:
     stage_title_text = Text(f"Stage {stage_id + 1}", style=f"bold {CELL_DIM}")
 
@@ -39,9 +40,10 @@ def __set_title(
 
     if position == "bottom":
         stage_title_str = f"Stage {stage_id + 1}"
-        content_width = len(executable)
-        if args:
-            content_width = max(content_width, len(" ".join(args)))
+        measurement = Measurement.get(console, console.options, content)
+        if measurement and measurement.maximum is not None:
+            content_width = measurement.maximum
+
         width = max(content_width + 4, len(stage_title_str) + 6)
         subtitle = stage_title_text
         expand = True
@@ -68,9 +70,7 @@ def _render_stage(stage: Stage, stage_id: int, title_position: TitlePosition) ->
         content.append("\n")
         content.append(" ".join(args), style=f"bold {CELL_TEXT}")
 
-    title, subtitle, width, expand = __set_title(
-        title_position, stage_id, executable, args
-    )
+    title, subtitle, width, expand = __set_title(title_position, stage_id, content)
 
     return Panel(
         content,
