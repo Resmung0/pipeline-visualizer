@@ -138,3 +138,67 @@ class Redirect(StrEnum):
             bool: True if the operator is horizontal, False otherwise.
         """
         return False
+
+
+class PipelineStatus(StrEnum):
+    """Pipeline execution status symbols."""
+
+    ERROR = "⊘"
+    SUCCESS = "◆"
+    PENDING = "◇"
+    RUNNING = "◈"
+    WARNING = "⚠"
+    SKIPPED = "↻"
+
+    def color(self) -> str:
+        """Return the Rich text color associated with the pipeline status."""
+        match self:
+            case PipelineStatus.SUCCESS:
+                return "green"
+            case PipelineStatus.ERROR:
+                return "red"
+            case PipelineStatus.WARNING:
+                return "yellow"
+            case PipelineStatus.RUNNING:
+                return "cyan"
+            case PipelineStatus.PENDING | PipelineStatus.SKIPPED:
+                return "dim"
+
+
+class StageStatus(StrEnum):
+    """Stage execution status symbols."""
+
+    ERROR = "⊘"
+    SUCCESS = "●"
+    PENDING = "○"
+    RUNNING = "◉"
+    WARNING = "⚠"
+    SKIPPED = "↻"
+
+    def color(self) -> str:
+        """Return the Rich text color associated with the stage status."""
+        match self:
+            case StageStatus.SUCCESS:
+                return "green"
+            case StageStatus.ERROR:
+                return "red"
+            case StageStatus.WARNING:
+                return "yellow"
+            case StageStatus.RUNNING:
+                return "cyan"
+            case StageStatus.PENDING | StageStatus.SKIPPED:
+                return "dim"
+
+
+class TreeConnector(StrEnum):
+    """Tree branch connector symbols.
+
+    Attributes:
+        CONNECTORS: Vertical connector line.
+        BRANCH: T-branch connector for non-last siblings.
+        LAST_BRANCH: Corner branch connector for last sibling.
+    """
+
+    CONNECTORS = "│"
+    BRANCH = "├─"
+    LAST_BRANCH = "└─"

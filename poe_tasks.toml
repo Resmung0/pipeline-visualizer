@@ -4,21 +4,21 @@ init = { help = "Initialize project configuration for development", cmd = "prek 
 
 [tool.poe.groups.view]
 heading = "Tasks related to view pipeline renders"
-    [tool.poe.groups.development.tasks.view-panel]
+    [tool.poe.groups.view.tasks.view-panel]
     help = "View pipeline using panel layout mode"
     cmd = "uv run --exact viz 'a && b | c'"
 
-    [tool.poe.groups.development.tasks.view-tree]
+    [tool.poe.groups.view.tasks.view-tree]
     help = "View pipeline using tree layout mode"
     cmd = "uv run --exact viz 'a && b | c' --layout tree"
 
-    [tool.poe.groups.development.tasks.view-badge]
+    [tool.poe.groups.view.tasks.view-badge]
     help = "View pipeline using badge layout mode"
     cmd = "uv run --exact viz 'a && b | c' --layout badge"
 
-    [tool.poe.groups.development.tasks.view-neon]
-    help = "View pipeline using neon layout mode"
-    cmd = "uv run --exact viz 'a && b | c' --layout warp"
+    [tool.poe.groups.view.tasks.view-step]
+    help = "View pipeline using step layout mode"
+    cmd = "uv run --exact viz 'a && b | c' --layout step"
 
 
 [tool.poe.groups.development]
